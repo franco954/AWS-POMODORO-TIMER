@@ -1,0 +1,159 @@
+# ─────────────────────────────────────────────────────────────────
+# GitHub Actions — CD Workflow
+# Deploy to dev on push to 'develop'
+# Deploy to prod on push to 'main' (with manual approval)
+#
+# Required GitHub Secrets:
+#   AWS_ACCESS_KEY_ID        — IAM user with deploy permissions
+#   AWS_SECRET_ACCESS_KEY    — IAM user secret
+#   TF_STATE_BUCKET          — S3 bucket name for Terraform state
+#   VAPID_PUBLIC_KEY         — VAPID public key for web push
+#   VAPID_PRIVATE_KEY        — VAPID private key (stored in SSM by Terraform)
+# ─────────────────────────────────────────────────────────────────
+name: CD
+
+on:
+  push:
+    branches:
+      - develop  # → deploy to dev
+      - main     # → deploy to prod
+
+env:
+  AWS_REGION:        us-east-1
+  TF_VERSION:        1.8.0
+  NODE_VERSION:      20
+
+jobs:
+  # ── Determine environment ────────────────────────────────────
+  config:
+    name: Configure deployment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      tf_dir:      ${{ steps.env.outputs.tf_dir }}
+    steps:
+      - id: env
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "tf_dir=terraform/environments/prod" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "tf_dir=terraform/environments/dev" >> $GITHUB_OUTPUT
+          fi
+
+  # ── Deploy Infrastructure ─────────────────────────────────────
+  deploy-infra:
+    name: Terraform Apply (${{ needs.config.outputs.environment }})
+    runs-on: ubuntu-latest
+    needs: config
+    environment: ${{ needs.config.outputs.environment }}  # Requires manual approval for prod in GitHub Environments
+    defaults:
+      run:
+        working-directory: ${{ needs.config.outputs.tf_dir }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Install backend Node.js dependencies
+        run: cd ../../../backend && npm ci
+
+      - name: terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=environments/${{ needs.config.outputs.environment }}/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=pomodoro-tfstate-lock"
+
+      - name: terraform plan
+        run: terraform plan -out=tfplan -input=false
+
+      - name: terraform apply
+        run: terraform apply -auto-approve tfplan
+
+      - name: Export Terraform outputs
+        id: tf-outputs
+        run: |
+          echo "api_endpoint=$(terraform output -raw api_endpoint)"          >> $GITHUB_OUTPUT
+          echo "cloudfront_url=$(terraform output -raw cloudfront_url)"      >> $GITHUB_OUTPUT
+          echo "s3_bucket=$(terraform output -raw s3_bucket)"                >> $GITHUB_OUTPUT
+          echo "cloudfront_id=$(terraform output -raw cloudfront_id)"        >> $GITHUB_OUTPUT
+          echo "cognito_pool_id=$(terraform output -raw cognito_pool_id)"    >> $GITHUB_OUTPUT
+          echo "cognito_client_id=$(terraform output -raw cognito_client_id)" >> $GITHUB_OUTPUT
+
+    outputs:
+      api_endpoint:      ${{ steps.tf-outputs.outputs.api_endpoint }}
+      cloudfront_url:    ${{ steps.tf-outputs.outputs.cloudfront_url }}
+      s3_bucket:         ${{ steps.tf-outputs.outputs.s3_bucket }}
+      cloudfront_id:     ${{ steps.tf-outputs.outputs.cloudfront_id }}
+      cognito_pool_id:   ${{ steps.tf-outputs.outputs.cognito_pool_id }}
+      cognito_client_id: ${{ steps.tf-outputs.outputs.cognito_client_id }}
+
+  # ── Deploy Frontend ───────────────────────────────────────────
+  deploy-frontend:
+    name: Build & Deploy Frontend (${{ needs.config.outputs.environment }})
+    runs-on: ubuntu-latest
+    needs: [config, deploy-infra]
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - run: npm ci
+
+      - name: Build React app
+        env:
+          VITE_COGNITO_USER_POOL_ID: ${{ needs.deploy-infra.outputs.cognito_pool_id }}
+          VITE_COGNITO_CLIENT_ID:    ${{ needs.deploy-infra.outputs.cognito_client_id }}
+          VITE_API_URL:              ${{ needs.deploy-infra.outputs.api_endpoint }}
+          VITE_VAPID_PUBLIC_KEY:     ${{ secrets.VAPID_PUBLIC_KEY }}
+        run: npm run build
+
+      - name: Sync to S3
+        run: |
+          aws s3 sync dist/ s3://${{ needs.deploy-infra.outputs.s3_bucket }}/ \
+            --delete \
+            --cache-control "public, max-age=86400" \
+            --exclude "index.html" \
+            --exclude "sw.js"
+          # index.html and sw.js should NOT be cached aggressively
+          aws s3 cp dist/index.html s3://${{ needs.deploy-infra.outputs.s3_bucket }}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate"
+          aws s3 cp dist/sw.js s3://${{ needs.deploy-infra.outputs.s3_bucket }}/sw.js \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ needs.deploy-infra.outputs.cloudfront_id }} \
+            --paths "/*"
+
+      - name: Print deployment URL
+        run: echo "🚀 Deployed to ${{ needs.deploy-infra.outputs.cloudfront_url }}"
