@@ -4,6 +4,7 @@
 
 terraform {
   required_version = ">= 1.7.0"
+  backend "s3" {}   # configured via -backend-config flags in CI/CD and terraform init
 }
 
 locals {

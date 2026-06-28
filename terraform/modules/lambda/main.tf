@@ -300,15 +300,15 @@ resource "aws_lambda_event_source_mapping" "sqs_notification" {
 
 # ── CloudWatch Log Groups (with short retention to avoid costs) ───
 resource "aws_cloudwatch_log_group" "lambdas" {
-  for_each          = toset([
-    aws_lambda_function.create_session.function_name,
-    aws_lambda_function.complete_session.function_name,
-    aws_lambda_function.get_sessions.function_name,
-    aws_lambda_function.get_stats.function_name,
-    aws_lambda_function.update_settings.function_name,
-    aws_lambda_function.notification_processor.function_name,
-    aws_lambda_function.daily_summary.function_name,
-    aws_lambda_function.cognito_post_confirmation.function_name,
+  for_each = toset([
+    "${var.project_name}-create-session-${var.environment}",
+    "${var.project_name}-complete-session-${var.environment}",
+    "${var.project_name}-get-sessions-${var.environment}",
+    "${var.project_name}-get-stats-${var.environment}",
+    "${var.project_name}-update-settings-${var.environment}",
+    "${var.project_name}-notification-processor-${var.environment}",
+    "${var.project_name}-daily-summary-${var.environment}",
+    "${var.project_name}-cognito-post-confirmation-${var.environment}",
   ])
   name              = "/aws/lambda/${each.key}"
   retention_in_days = 7  # Short retention to minimize storage costs

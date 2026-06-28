@@ -78,7 +78,7 @@ jobs:
             -backend-config="dynamodb_table=pomodoro-tfstate-lock"
 
       - name: terraform plan
-        run: terraform plan -out=tfplan -input=false
+        run: terraform plan -out=tfplan -input=false -refresh=true
 
       - name: terraform apply
         run: terraform apply -auto-approve tfplan
