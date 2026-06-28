@@ -6,12 +6,12 @@ import {
 
 
 export default function AuthPage({ onAuthSuccess, addToast }) {
-  const [mode, setMode]       = useState('login');   // login | register | verify
-  const [email, setEmail]     = useState('');
+  const [mode, setMode] = useState('login');   // login | register | verify
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName]       = useState('');
-  const [code, setCode]       = useState('');
-  const [error, setError]     = useState('');
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const clearError = () => setError('');
@@ -76,14 +76,14 @@ export default function AuthPage({ onAuthSuccess, addToast }) {
 
   const getErrorMessage = (err) => {
     const map = {
-      'UserNotFoundException':              'No existe una cuenta con ese email.',
-      'NotAuthorizedException':             'Email o contraseña incorrectos.',
-      'UsernameExistsException':            'Ya existe una cuenta con ese email.',
-      'CodeMismatchException':              'Código incorrecto.',
-      'ExpiredCodeException':               'El código expiró. Solicitá uno nuevo.',
-      'InvalidPasswordException':           'La contraseña no cumple los requisitos mínimos.',
-      'UserNotConfirmedException':          'Debés verificar tu email primero.',
-      'LimitExceededException':             'Demasiados intentos. Esperá unos minutos.',
+      'UserNotFoundException': 'No existe una cuenta con ese email.',
+      'NotAuthorizedException': 'Email o contraseña incorrectos.',
+      'UsernameExistsException': 'Ya existe una cuenta con ese email.',
+      'CodeMismatchException': 'Código incorrecto.',
+      'ExpiredCodeException': 'El código expiró. Solicitá uno nuevo.',
+      'InvalidPasswordException': 'La contraseña no cumple los requisitos mínimos.',
+      'UserNotConfirmedException': 'Debés verificar tu email primero.',
+      'LimitExceededException': 'Demasiados intentos. Esperá unos minutos.',
     };
     return map[err.name] || err.message || 'Error inesperado. Intentá de nuevo.';
   };
@@ -107,13 +107,13 @@ export default function AuthPage({ onAuthSuccess, addToast }) {
                 <input id="login-password" type="password" className="form-input" value={password}
                   onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
               </div>
-              <button id="login-submit" type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}} disabled={loading}>
+              <button id="login-submit" type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
                 {loading ? <span className="spinner" /> : 'Iniciar sesión'}
               </button>
             </form>
             <div className="auth-switch">
               ¿No tenés cuenta?
-              <button id="go-register" onClick={() => { setMode('register'); clearError(); }}>Registrate gratis</button>
+              <button id="go-register" onClick={() => { setMode('register'); clearError(); }}>Registrate</button>
             </div>
           </>
         )}
@@ -135,11 +135,11 @@ export default function AuthPage({ onAuthSuccess, addToast }) {
                   onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" required />
               </div>
               <div className="form-group">
-                <label className="form-label">Contraseña <span style={{color:'var(--clr-text-dim)',fontWeight:400}}>(8+ chars, mayúscula y número)</span></label>
+                <label className="form-label">Contraseña <span style={{ color: 'var(--clr-text-dim)', fontWeight: 400 }}>(8+ chars, mayúscula y número)</span></label>
                 <input id="reg-password" type="password" className="form-input" value={password}
                   onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
               </div>
-              <button id="reg-submit" type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}} disabled={loading}>
+              <button id="reg-submit" type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
                 {loading ? <span className="spinner" /> : 'Crear cuenta'}
               </button>
             </form>
@@ -160,10 +160,10 @@ export default function AuthPage({ onAuthSuccess, addToast }) {
                 <label className="form-label">Código de verificación</label>
                 <input id="verify-code" type="text" className="form-input" value={code}
                   onChange={e => setCode(e.target.value)} placeholder="123456"
-                  maxLength={6} style={{textAlign:'center',letterSpacing:'0.3em',fontSize:'1.4rem'}}
+                  maxLength={6} style={{ textAlign: 'center', letterSpacing: '0.3em', fontSize: '1.4rem' }}
                   required autoFocus />
               </div>
-              <button id="verify-submit" type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}} disabled={loading}>
+              <button id="verify-submit" type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
                 {loading ? <span className="spinner" /> : 'Verificar'}
               </button>
             </form>
