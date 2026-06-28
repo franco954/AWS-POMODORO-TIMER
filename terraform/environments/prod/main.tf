@@ -12,7 +12,7 @@ locals {
   environment   = "prod"
   aws_region    = "us-east-1"
   # CloudFront URL se completa después del primer apply
-  cors_origin   = "https://CLOUDFRONT_URL_PROD"
+  cors_origin   = "https://d38mqcuh2xa295.cloudfront.net"
 }
 
 module "dynamodb" {
