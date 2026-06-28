@@ -6,7 +6,7 @@
 import {
   ok, badReq, unauth, err,
   getUserId, nowIso, dbGet, dbPut, dbUpdate, log,
-} from '../shared/utils.mjs';
+} from '/opt/nodejs/utils.mjs';
 
 const DEFAULT_SETTINGS = {
   workDuration:       25,

@@ -6,7 +6,7 @@
  */
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
-import { log, REGION } from '../shared/utils.mjs';
+import { log, REGION } from '/opt/nodejs/utils.mjs';
 
 const ddbClient = new DynamoDBClient({ region: REGION });
 const ddb       = DynamoDBDocumentClient.from(ddbClient);

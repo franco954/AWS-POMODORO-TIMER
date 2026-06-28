@@ -4,7 +4,7 @@
  * (VAPID keys stored in SSM Parameter Store)
  */
 import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
-import { log, REGION } from '../shared/utils.mjs';
+import { log, REGION } from '/opt/nodejs/utils.mjs';
 import webpush from 'web-push';
 
 const ssmClient = new SSMClient({ region: REGION });
@@ -58,7 +58,7 @@ const processRecord = async (record) => {
     await initVapid();
 
     // Get user's push subscription from DynamoDB
-    const { dbGet } = await import('../shared/utils.mjs');
+    const { dbGet } = await import('/opt/nodejs/utils.mjs');
     const subscription = await dbGet(`USER#${userId}`, 'PUSH_SUBSCRIPTION');
 
     if (!subscription?.endpoint) {
@@ -91,7 +91,7 @@ const processRecord = async (record) => {
     if (e.statusCode === 410) {
       // Subscription expired — clean it up
       log.warn('Push subscription expired, removing', { userId });
-      const { dbUpdate } = await import('../shared/utils.mjs');
+      const { dbUpdate } = await import('/opt/nodejs/utils.mjs');
       await dbUpdate(
         `USER#${userId}`, 'PUSH_SUBSCRIPTION',
         'SET #active = :false',

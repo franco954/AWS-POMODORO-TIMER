@@ -2,7 +2,7 @@
  * POST /sessions — Create a new Pomodoro session
  * Body: { type: 'work'|'short_break'|'long_break', duration: number, notes?: string }
  */
-import { ok, created, badReq, unauth, err, getUserId, newId, nowIso, todayStr, dbPut, dbUpdate, log } from '../shared/utils.mjs';
+import { ok, created, badReq, unauth, err, getUserId, newId, nowIso, todayStr, dbPut, dbUpdate, log } from '/opt/nodejs/utils.mjs';
 
 export const handler = async (event) => {
   try {

@@ -28,6 +28,9 @@ locals {
     NODE_OPTIONS   = "--enable-source-maps"
     LOG_LEVEL      = var.environment == "prod" ? "warn" : "debug"
   }
+
+  # All Lambda functions share this layer
+  shared_layer_arns = [aws_lambda_layer_version.shared_utils.arn]
 }
 
 # ── IAM: Base execution role (shared) ────────────────────────────
@@ -112,6 +115,26 @@ resource "aws_iam_role_policy" "sns" {
   })
 }
 
+# ── Lambda Layer: shared utilities ───────────────────────────────
+# The layer exposes utils.mjs at /opt/nodejs/utils.mjs inside each Lambda
+data "archive_file" "shared_utils_layer" {
+  type        = "zip"
+  output_path = "${path.module}/.dist/shared_utils_layer.zip"
+
+  source {
+    content  = file("${local.lambdas_src_path}/shared/utils.mjs")
+    filename = "nodejs/utils.mjs"
+  }
+}
+
+resource "aws_lambda_layer_version" "shared_utils" {
+  layer_name          = "${var.project_name}-shared-utils-${var.environment}"
+  filename            = data.archive_file.shared_utils_layer.output_path
+  source_code_hash    = data.archive_file.shared_utils_layer.output_base64sha256
+  compatible_runtimes = ["nodejs20.x"]
+  description         = "Shared utility functions (DynamoDB helpers, response helpers, logger)"
+}
+
 # ── Helper: Zip each Lambda ───────────────────────────────────────
 data "archive_file" "create_session" {
   type        = "zip"
@@ -164,6 +187,7 @@ resource "aws_lambda_function" "create_session" {
   memory_size      = local.lambda_memory
   filename         = data.archive_file.create_session.output_path
   source_code_hash = data.archive_file.create_session.output_base64sha256
+  layers           = local.shared_layer_arns
   tracing_config { mode = "Active" }
   environment { variables = local.common_env }
 }
@@ -177,6 +201,7 @@ resource "aws_lambda_function" "complete_session" {
   memory_size      = local.lambda_memory
   filename         = data.archive_file.complete_session.output_path
   source_code_hash = data.archive_file.complete_session.output_base64sha256
+  layers           = local.shared_layer_arns
   tracing_config { mode = "Active" }
   environment { variables = local.common_env }
 }
@@ -190,6 +215,7 @@ resource "aws_lambda_function" "get_sessions" {
   memory_size      = local.lambda_memory
   filename         = data.archive_file.get_sessions.output_path
   source_code_hash = data.archive_file.get_sessions.output_base64sha256
+  layers           = local.shared_layer_arns
   tracing_config { mode = "Active" }
   environment { variables = local.common_env }
 }
@@ -203,6 +229,7 @@ resource "aws_lambda_function" "get_stats" {
   memory_size      = local.lambda_memory
   filename         = data.archive_file.get_stats.output_path
   source_code_hash = data.archive_file.get_stats.output_base64sha256
+  layers           = local.shared_layer_arns
   tracing_config { mode = "Active" }
   environment { variables = local.common_env }
 }
@@ -216,6 +243,7 @@ resource "aws_lambda_function" "update_settings" {
   memory_size      = local.lambda_memory
   filename         = data.archive_file.update_settings.output_path
   source_code_hash = data.archive_file.update_settings.output_base64sha256
+  layers           = local.shared_layer_arns
   tracing_config { mode = "Active" }
   environment { variables = local.common_env }
 }
@@ -229,6 +257,7 @@ resource "aws_lambda_function" "notification_processor" {
   memory_size      = local.lambda_memory
   filename         = data.archive_file.notification_processor.output_path
   source_code_hash = data.archive_file.notification_processor.output_base64sha256
+  layers           = local.shared_layer_arns
   tracing_config { mode = "Active" }
   environment { variables = local.common_env }
 }
@@ -242,6 +271,7 @@ resource "aws_lambda_function" "daily_summary" {
   memory_size      = local.lambda_memory
   filename         = data.archive_file.daily_summary.output_path
   source_code_hash = data.archive_file.daily_summary.output_base64sha256
+  layers           = local.shared_layer_arns
   tracing_config { mode = "Active" }
   environment { variables = local.common_env }
 }
@@ -255,6 +285,7 @@ resource "aws_lambda_function" "cognito_post_confirmation" {
   memory_size      = local.lambda_memory
   filename         = data.archive_file.cognito_post_confirmation.output_path
   source_code_hash = data.archive_file.cognito_post_confirmation.output_base64sha256
+  layers           = local.shared_layer_arns
   tracing_config { mode = "Active" }
   environment { variables = local.common_env }
 }

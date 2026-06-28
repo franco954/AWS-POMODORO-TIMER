@@ -2,7 +2,7 @@
  * Cognito Post Confirmation Trigger
  * Initializes user record in DynamoDB after email verification
  */
-import { dbPut, log, nowIso } from '../shared/utils.mjs';
+import { dbPut, log, nowIso } from '/opt/nodejs/utils.mjs';
 
 export const handler = async (event) => {
   log.info('Post confirmation trigger', { userId: event.userName });

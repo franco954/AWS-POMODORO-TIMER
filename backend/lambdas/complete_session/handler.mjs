@@ -8,7 +8,7 @@ import {
   getUserId, nowIso, todayStr,
   dbGet, dbUpdate, log,
   TABLE_NAME, REGION, CORS_ORIGIN,
-} from '../shared/utils.mjs';
+} from '/opt/nodejs/utils.mjs';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';

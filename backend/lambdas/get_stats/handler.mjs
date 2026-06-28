@@ -2,7 +2,7 @@
  * GET /stats — Aggregate stats for the authenticated user
  * Returns: today's count, weekly count, total sessions, total minutes, streak
  */
-import { ok, unauth, err, getUserId, todayStr, dbQuery, log } from '../shared/utils.mjs';
+import { ok, unauth, err, getUserId, todayStr, dbQuery, log } from '/opt/nodejs/utils.mjs';
 
 const getWeekStart = () => {
   const d = new Date();

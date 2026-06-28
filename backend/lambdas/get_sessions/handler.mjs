@@ -2,7 +2,7 @@
  * GET /sessions — List paginated session history for the authenticated user
  * Query params: limit (default 20), date (YYYY-MM-DD filter), type (work|short_break|long_break)
  */
-import { ok, unauth, err, getUserId, dbQuery, log } from '../shared/utils.mjs';
+import { ok, unauth, err, getUserId, dbQuery, log } from '/opt/nodejs/utils.mjs';
 
 export const handler = async (event) => {
   try {
