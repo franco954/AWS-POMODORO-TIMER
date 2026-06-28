@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────
 # GitHub Actions — CD Workflow
 # Deploy to dev on push to 'develop'
-# Deploy to prod on push to 'main' (with manual approval)
+# Deploy to prod on push to 'master' (with manual approval)
 #
 # Required GitHub Secrets:
 #   AWS_ACCESS_KEY_ID        — IAM user with deploy permissions
@@ -16,7 +16,7 @@ on:
   push:
     branches:
       - develop  # → deploy to dev
-      - main     # → deploy to prod
+      - master     # → deploy to prod
 
 env:
   AWS_REGION:        us-east-1
@@ -34,7 +34,7 @@ jobs:
     steps:
       - id: env
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
+          if [ "${{ github.ref_name }}" = "master" ]; then
             echo "environment=prod" >> $GITHUB_OUTPUT
             echo "tf_dir=terraform/environments/prod" >> $GITHUB_OUTPUT
           else

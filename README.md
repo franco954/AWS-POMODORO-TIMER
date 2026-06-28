@@ -184,7 +184,7 @@ aws cloudfront create-invalidation \
 ```
 feature/* → PR → CI (lint + validate)
 develop   → push → CD deploy a DEV automáticamente
-main      → push → CD deploy a PROD (requiere aprobación manual en GitHub Environments)
+master      → push → CD deploy a PROD (requiere aprobación manual en GitHub Environments)
 ```
 
 Para habilitar aprobación manual en prod:  
