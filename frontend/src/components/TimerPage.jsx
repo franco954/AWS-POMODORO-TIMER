@@ -19,6 +19,7 @@ export default function TimerPage({ user, onSignOut, addToast }) {
   const [sessions, setSessions]   = useState([]);
   const [activeSession, setActiveSession] = useState(null);
   const [showSettings, setShowSettings]   = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [loadingData, setLoadingData]     = useState(true);
 
   const intervalRef = useRef(null);
@@ -178,12 +179,33 @@ export default function TimerPage({ user, onSignOut, addToast }) {
             </div>
             <div className="nav-actions">
               {stats?.all?.streak > 0 && (
-                <div className="streak-badge">
-                  🔥 {stats.all.streak} {stats.all.streak === 1 ? 'día' : 'días'}
+                <div className="streak-badge" style={{ marginBottom: 0 }}>
+                  🔥 {stats.all.streak}
                 </div>
               )}
-              <button id="settings-btn" className="btn-icon" onClick={() => setShowSettings(true)} title="Configuración">⚙️</button>
-              <button id="signout-btn" className="btn btn-ghost" onClick={onSignOut}>Salir</button>
+              <button id="settings-btn" className="btn-icon" onClick={() => { setShowSettings(true); setShowProfileDropdown(false); }} title="Configuración">⚙️</button>
+              <div className="profile-menu-container">
+                <button 
+                  id="profile-btn" 
+                  className={`btn-icon ${showProfileDropdown ? 'active' : ''}`} 
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)} 
+                  title="Mi Cuenta"
+                >
+                  👤
+                </button>
+                {showProfileDropdown && (
+                  <div className="profile-dropdown">
+                    <div className="profile-dropdown-header">
+                      <span className="profile-dropdown-title">Sesión iniciada</span>
+                      <span className="profile-dropdown-email">{user?.signInDetails?.loginId || user?.username || 'Usuario'}</span>
+                    </div>
+                    <div className="profile-dropdown-divider" />
+                    <button id="signout-btn" className="profile-dropdown-item" onClick={() => { setShowProfileDropdown(false); onSignOut(); }}>
+                      🚪 Salir
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -241,15 +263,14 @@ export default function TimerPage({ user, onSignOut, addToast }) {
               </div>
             </div>
 
-            {/* Controls */}
             <div className="timer-controls">
               <button id="reset-btn" className="btn-icon" onClick={handleReset} title="Reiniciar" aria-label="Reiniciar temporizador">↺</button>
               {!running ? (
                 <button
                   id="start-btn"
                   className={`btn-timer-main btn-${modeClass}`}
-                  onClick={handleStart}
-                  aria-label="Iniciar temporizador"
+                  onClick={activeSession ? handleResume : handleStart}
+                  aria-label={activeSession ? "Reanudar temporizador" : "Iniciar temporizador"}
                 >▶</button>
               ) : (
                 <button
@@ -259,10 +280,6 @@ export default function TimerPage({ user, onSignOut, addToast }) {
                   aria-label="Pausar temporizador"
                 >⏸</button>
               )}
-              {!running && activeSession && (
-                <button id="resume-btn" className="btn-icon" onClick={handleResume} aria-label="Reanudar">▶▶</button>
-              )}
-              {running && <div style={{width:44}} />}
             </div>
           </section>
 
